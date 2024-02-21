@@ -1,7 +1,7 @@
 package ru.serbin.features.ui.view
 
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import ru.serbin.features.utils.MyColor
