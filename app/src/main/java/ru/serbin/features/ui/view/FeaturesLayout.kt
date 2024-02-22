@@ -14,8 +14,13 @@ fun FeaturesLayout(component: FeaturesComponent) {
 
     Children(stack = childStack) { child ->
         when (val instance = child.instance) {
-            is FeaturesComponent.Child.Settings -> SettingsFeaturesLayout(component = instance.component)
-            is FeaturesComponent.Child.Enabled -> EnabledFeaturesLayout(component = instance.component)
+            is FeaturesComponent.Child.Settings -> SettingsFeaturesLayout(
+                state = instance.component.settingsFeaturesState
+            )
+
+            is FeaturesComponent.Child.Enabled -> EnabledFeaturesLayout(
+                state = instance.component.enabledFeaturesState
+            )
         }
     }
 }

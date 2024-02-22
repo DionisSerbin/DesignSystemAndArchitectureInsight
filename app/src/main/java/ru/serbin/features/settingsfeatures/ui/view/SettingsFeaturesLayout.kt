@@ -32,11 +32,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.Dispatchers
 import ru.serbin.designsystemandarchitectureinsight.ui.theme.DesignSystemAndArchitectureInsightTheme
 import ru.serbin.features.data.model.Feature
-import ru.serbin.features.settingsfeatures.ui.viewmodel.SettingsFeaturesComponent
-import ru.serbin.features.settingsfeatures.ui.viewmodel.SettingsFeaturesComponentStub
+import ru.serbin.features.settingsfeatures.ui.state.SettingsFeaturesState
+import ru.serbin.features.settingsfeatures.ui.state.SettingsFeaturesStateStub
 import ru.serbin.features.ui.view.ErrorBox
 import ru.serbin.features.ui.view.FeatureCardText
 import ru.serbin.features.ui.view.Loading
@@ -45,25 +44,24 @@ import ru.serbin.features.utils.MyColor
 import ru.serbin.features.utils.StringsConstants
 
 @Composable
-fun SettingsFeaturesLayout(component: SettingsFeaturesComponent) {
-    val state = component.settingsFeaturesState.collectAsState(Dispatchers.Main.immediate)
-    val features = state.value.features
-    val isLoading = state.value.isLoading
-    val errorText = state.value.error
+fun SettingsFeaturesLayout(state: SettingsFeaturesState) {
+    val features = state.features.collectAsState().value
+    val isLoading = state.isLoading.collectAsState().value
+    val errorText = state.error.collectAsState().value
     ErrorBox(
         errorText = errorText
     )
     Column {
         BackTopPanel(
             modifier = Modifier.fillMaxWidth(),
-            onReturnClick = component::onPreviousScreenReturn
+            onReturnClick = state.onEnabledFeaturesOpen
         )
         Space(value = 40)
         FeatureList(
             modifier = Modifier.fillMaxSize(),
             shouldShow = !isLoading && errorText == null,
             features = features,
-            onFeatureEnablingChanged = component::onFeatureEnabledChanged
+            onFeatureEnablingChanged = state.onFeatureEnabledChanged
         )
     }
     Loading(
@@ -194,7 +192,7 @@ private fun FeatureCard(
 fun FeatureListLayoutPreview() {
     DesignSystemAndArchitectureInsightTheme {
         Surface(color = MyColor.Background) {
-            SettingsFeaturesLayout(component = SettingsFeaturesComponentStub())
+            SettingsFeaturesLayout(state = SettingsFeaturesStateStub())
         }
     }
 }

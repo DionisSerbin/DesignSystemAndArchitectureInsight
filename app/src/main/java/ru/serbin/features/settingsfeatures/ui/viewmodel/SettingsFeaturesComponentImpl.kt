@@ -1,74 +1,74 @@
 package ru.serbin.features.settingsfeatures.ui.viewmodel
 
 import com.arkivanov.decompose.ComponentContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import ru.serbin.features.data.model.Feature
 import ru.serbin.features.settingsfeatures.domain.usecases.SettingsUseCases
 import ru.serbin.features.settingsfeatures.ui.state.SettingsFeaturesState
+import ru.serbin.features.settingsfeatures.ui.state.SettingsFeaturesStateImpl
 import ru.serbin.features.utils.componentCoroutineScope
+import ru.serbin.features.utils.toError
+import ru.serbin.features.utils.toFeatures
+import ru.serbin.features.utils.toLoading
 import ru.serbin.utils.Logger
 import ru.serbin.utils.ResponseStatus
 import javax.inject.Inject
 
 class SettingsFeaturesComponentImpl @Inject constructor(
     componentContext: ComponentContext,
+    private val coroutineScope: CoroutineScope,
     private val settingsUseCases: SettingsUseCases,
-    private val onEnabledFeaturesOpen: () -> Unit
+    onEnabledFeaturesOpen: (List<Feature>) -> Unit
 ) : ComponentContext by componentContext, SettingsFeaturesComponent {
 
     init {
         getInitFeatures()
     }
 
-    private val _settingsFeaturesState = MutableStateFlow(
-        SettingsFeaturesState()
-    )
-    override val settingsFeaturesState = _settingsFeaturesState.asStateFlow()
-
-    private val coroutineScope = componentCoroutineScope()
-
     private val logger = Logger("SettingsFeaturesComponentImpl")
 
-    override fun onFeatureEnabledChanged(name: String) {
-        TODO("Not yet implemented")
-    }
+    private val featuresStateFlow = MutableStateFlow<List<Feature>>(emptyList())
+    private val isLoadingStateFlow = MutableStateFlow(true)
+    private val errorStateFlow = MutableStateFlow<String?>(null)
 
-    override fun onPreviousScreenReturn() {
-        logger.d("open enabled features")
-        onEnabledFeaturesOpen()
+    override val settingsFeaturesState: SettingsFeaturesState = SettingsFeaturesStateImpl(
+        isLoading = isLoadingStateFlow,
+        features = featuresStateFlow,
+        error = errorStateFlow,
+        onEnabledFeaturesOpen = {
+            logger.d("open enabled features")
+            onEnabledFeaturesOpen(featuresStateFlow.value)
+        },
+        onFeatureEnabledChanged = ::onFeatureEnabledChanged
+    )
+
+    private fun onFeatureEnabledChanged(name: String) {
+        coroutineScope.launch {
+            withContext(Dispatchers.IO) {
+                settingsUseCases.changeFeatureStateByName(
+                    featuresStateFlow,
+                    name
+                )
+            }
+        }
     }
 
     private fun getInitFeatures() {
         coroutineScope.launch {
             settingsUseCases.getAllFeatures().collect { featuresResponse ->
-                logger.d("collect features $featuresResponse")
+                logger.d("collect features ${featuresResponse.data}")
 
-                _settingsFeaturesState.value = when (featuresResponse) {
-                    is ResponseStatus.Success -> {
-                        settingsFeaturesState.value.copy(
-                            isLoading = false,
-                            features = featuresResponse.data ?: emptyList(),
-                            error = null
-                        )
-                    }
-
-                    is ResponseStatus.Error -> {
-                        settingsFeaturesState.value.copy(
-                            isLoading = false,
-                            features = emptyList(),
-                            error = featuresResponse.message
-                        )
-                    }
-
-                    is ResponseStatus.Loading -> {
-                        settingsFeaturesState.value.copy(
-                            isLoading = true,
-                            features = emptyList(),
-                            error = null
-                        )
-                    }
-                }
+                featuresStateFlow.emit(featuresResponse.toFeatures())
+                isLoadingStateFlow.value = featuresResponse.toLoading()
+                errorStateFlow.value = featuresResponse.toError()
             }
         }
     }

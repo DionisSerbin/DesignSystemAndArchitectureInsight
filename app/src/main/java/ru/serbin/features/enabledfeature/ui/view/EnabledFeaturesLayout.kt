@@ -27,11 +27,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.Dispatchers
 import ru.serbin.designsystemandarchitectureinsight.ui.theme.DesignSystemAndArchitectureInsightTheme
 import ru.serbin.features.data.model.Feature
-import ru.serbin.features.enabledfeature.ui.viewmodel.EnabledFeaturesComponent
-import ru.serbin.features.enabledfeature.ui.viewmodel.EnabledFeaturesComponentStub
+import ru.serbin.features.enabledfeature.ui.state.EnabledFeaturesState
+import ru.serbin.features.enabledfeature.ui.state.EnabledFeaturesStateStub
 import ru.serbin.features.ui.view.ErrorBox
 import ru.serbin.features.ui.view.FeatureCardText
 import ru.serbin.features.ui.view.Loading
@@ -40,11 +39,10 @@ import ru.serbin.features.utils.MyColor
 import ru.serbin.features.utils.StringsConstants
 
 @Composable
-fun EnabledFeaturesLayout(component: EnabledFeaturesComponent) {
-    val state = component.enabledFeaturesState.collectAsState(Dispatchers.Main.immediate)
-    val features = state.value.features
-    val isLoading = state.value.isLoading
-    val errorText = state.value.error
+fun EnabledFeaturesLayout(state: EnabledFeaturesState) {
+    val features = state.features.collectAsState().value
+    val isLoading = state.isLoading.collectAsState().value
+    val errorText = state.error.collectAsState().value
 
     ErrorBox(
         errorText = errorText
@@ -52,7 +50,7 @@ fun EnabledFeaturesLayout(component: EnabledFeaturesComponent) {
     Column {
         SettingsFeaturesButton(
             modifier = Modifier.padding(16.dp),
-            onClick = component::onFeatureSettingsClicked
+            onClick = state.onFeatureSettingsClicked
         )
         Space(value = 40)
         Tittle(modifier = Modifier.fillMaxWidth())
@@ -61,7 +59,7 @@ fun EnabledFeaturesLayout(component: EnabledFeaturesComponent) {
             modifier = Modifier.fillMaxSize(),
             features = features,
             shouldShow = !isLoading && errorText == null,
-            onFeatureClick = component::onFeatureClicked
+            onFeatureClick = state.onFeatureClicked
         )
     }
 
@@ -167,7 +165,7 @@ fun Tittle(modifier: Modifier) {
 fun preview() {
     DesignSystemAndArchitectureInsightTheme() {
         Surface(color = MyColor.Background) {
-            EnabledFeaturesLayout(component = EnabledFeaturesComponentStub())
+            EnabledFeaturesLayout(state = EnabledFeaturesStateStub())
         }
     }
 }
