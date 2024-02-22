@@ -1,4 +1,4 @@
-My repository of trying modern ways for android architecture:
+My repository of trying modern ways for android architecture: \n
 mvvm
 clean architecture
 decompose
