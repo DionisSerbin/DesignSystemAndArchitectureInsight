@@ -1,7 +1,6 @@
 package ru.serbin.features.settingsfeatures.ui.state
 
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import ru.serbin.features.data.mockApi.MockFeatures
 import ru.serbin.features.data.model.Feature
